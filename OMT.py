@@ -6,6 +6,9 @@ import subprocess
 import sys
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
+import shutil
+
 
 
 def parse_args():
@@ -64,7 +67,10 @@ def run_nmap(scan, args, output_dir):
         raise ValueError("Scan entry missing 'target' field")
 
     # Build per-scan output file path
-    output_file = output_dir / f"{name}.txt"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"{name}_{timestamp}"
+    output_file = output_dir / filename
+
 
     # Construct the nmap command safely as a list
     # (avoids shell=True injection risks)
@@ -72,7 +78,7 @@ def run_nmap(scan, args, output_dir):
         "nmap",
         *args.split(),     # Split argument string into flags
         target,
-        "-oN",             # Normal output format
+        "-oA",             # Normal all formats
         str(output_file)
     ]
 
@@ -96,6 +102,10 @@ def run_nmap(scan, args, output_dir):
                 "status": "error",
                 "stderr": result.stderr
             }
+        else:
+            backup_file = output_dir / f"{name}_latest.xml"
+            shutil.copy2(output_file + ".xml", backup_file)
+        
 
         # Successful scan
         return {
@@ -168,11 +178,6 @@ def main():
 
         # as_completed() yields Future objects
         # as soon as they finish, regardless of order.
-        #
-        # This allows:
-        #   - Real-time progress reporting
-        #   - Immediate error handling
-        #   - No waiting for slow scans first
         for future in as_completed(futures):
 
             # Retrieve the return value of run_nmap().

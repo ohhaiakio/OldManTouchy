@@ -8,10 +8,6 @@
     {
       "name": "udp_basic",
       "target": "192.168.1.10"
-    },
-    {
-      "name": "version_scan",
-      "target": "scanme.nmap.org"
     }
   ]
 }
