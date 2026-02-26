@@ -1,9 +1,10 @@
 {
-  "args": "-T4 --top-ports 1000 -A",
+  "args": "-T4 --top-ports 1000 -A --open --host-timeout 300s --stats-every 10s",
+  "timeout": "600",
   "scans": [
     {
       "name": "team01-quick",
-      "target": "10.101.101.0/24"
+      "target": "192.168.1.1"
     },
     {
       "name": "udp_basic",

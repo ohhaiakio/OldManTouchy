@@ -61,6 +61,8 @@ def run_nmap(scan, args, output_dir):
     # Extract scan parameters from JSON entry
     name = scan.get("name", "scan")
     target = scan.get("target")
+    timeout = scan.get("timeout")
+
 
     # Target is mandatory — abort this scan if missing
     if not target:
@@ -92,9 +94,18 @@ def run_nmap(scan, args, output_dir):
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True
+            text=True,
+            timeout=int(timeout), # seconds
+            bufsize=1
         )
+        start_time = time.time()
 
+        for line in process.stderr:
+            elapsed = int(time.time() - start_time)
+
+        print(f"[{name}] +{elapsed}s | {line.strip()}")
+
+        
         # Non-zero exit code indicates failure
         if result.returncode != 0:
             return {
@@ -113,7 +124,12 @@ def run_nmap(scan, args, output_dir):
             "status": "success",
             "output": str(output_file)
         }
-
+    except subprocess.TimeoutExpired as e:
+        return {
+            "name": name,
+            "status": "timeout",
+            "error": f"Scan exceeded {timeout}s"
+        }
     except Exception as e:
         # Catch unexpected runtime errors (OS issues, missing nmap, etc.)
         return {
