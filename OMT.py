@@ -4,6 +4,7 @@ import argparse
 import json
 import subprocess
 import sys
+# import time
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
@@ -13,16 +14,20 @@ import shutil
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Run multiple Nmap scans from JSON config"
+        prog="Old Man Touchy (OMT)",
+        description="Run multiple Nmap scans from JSON config",
+        epilog="Example: OMT.py teams_short.json ./results"
     )
 
     parser.add_argument(
         "input_file",
+        metavar="INPUT_JSON",
         help="Path to JSON scan configuration file"
     )
 
     parser.add_argument(
         "output_dir",
+        metavar="OUTPUT_DIR",
         help="Directory to store scan results"
     )
 
@@ -39,7 +44,7 @@ def load_config(path):
         sys.exit(1)
 
 
-def run_nmap(scan, args, output_dir):
+def run_nmap(scan, args, timeout, output_dir):
     """
     Executes a single Nmap scan based on a scan definition.
 
@@ -61,7 +66,7 @@ def run_nmap(scan, args, output_dir):
     # Extract scan parameters from JSON entry
     name = scan.get("name", "scan")
     target = scan.get("target")
-    timeout = scan.get("timeout")
+    # timeout = scan.get("timeout")
 
 
     # Target is mandatory — abort this scan if missing
@@ -90,20 +95,22 @@ def run_nmap(scan, args, output_dir):
     try:
         # Execute the nmap process and wait for completion.
         # stdout/stderr are captured for error reporting.
-        result = subprocess.run(
+        result = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            timeout=int(timeout), # seconds
+            # timeout=int(timeout), # seconds
             bufsize=1
         )
-        start_time = time.time()
 
-        for line in process.stderr:
-            elapsed = int(time.time() - start_time)
+        PROGRESS_PATTERNS = ("Stats:", "Timing:", "ETC:")
 
-        print(f"[{name}] +{elapsed}s | {line.strip()}")
+        for line in result.stdout:
+            line = line.rstrip()
+            if any(line.startswith(p) for p in PROGRESS_PATTERNS):
+                print(f"    [{name}] {line}")
+        returncode = result.wait()
 
         
         # Non-zero exit code indicates failure
@@ -114,8 +121,9 @@ def run_nmap(scan, args, output_dir):
                 "stderr": result.stderr
             }
         else:
+            xml_file = output_file.with_suffix(".xml")
             backup_file = output_dir / f"{name}_latest.xml"
-            shutil.copy2(output_file + ".xml", backup_file)
+            shutil.copy2(xml_file, backup_file)
         
 
         # Successful scan
@@ -157,6 +165,7 @@ def main():
 
     scans = config.get("scans", [])
     args = config.get("args")
+    timeout = config.get("timeout")
 
     if not scans:
         print("[!] No scans defined in JSON")
@@ -187,7 +196,7 @@ def main():
         # We collect all Future objects in a list
         # so we can track completion later.
         futures = [
-            executor.submit(run_nmap, scan, args, output_dir)
+            executor.submit(run_nmap, scan, args, timeout, output_dir)
             for scan in scans
         ]
 
