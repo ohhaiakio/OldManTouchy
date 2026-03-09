@@ -4,11 +4,11 @@ import argparse
 import json
 import subprocess
 import sys
-# import time
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 import shutil
+from diff import diff
 
 
 
@@ -44,7 +44,7 @@ def load_config(path):
         sys.exit(1)
 
 
-def run_nmap(scan, args, timeout, output_dir):
+def run_nmap(scan, args, timeout, output_dir, scan_name):
     """
     Executes a single Nmap scan based on a scan definition.
 
@@ -125,7 +125,7 @@ def run_nmap(scan, args, timeout, output_dir):
             xml_file = output_file.with_suffix(".xml")
             backup_file = output_dir / f"{team_name}_latest.xml"
             shutil.copy2(xml_file, backup_file)
-        
+            diff(xml_file, output_dir, team_name, scan_name)
 
         # Successful scan
         return {
@@ -160,8 +160,6 @@ def main():
         print("[!] Input file does not exist")
         sys.exit(1)
 
-    
-
     config = load_config(input_path)
 
     scans = config.get("scans", [])
@@ -181,10 +179,9 @@ def main():
         sys.exit(1)
 
     print(f"[+] Loaded {len(scans)} scans")
-    print(f"[+] Output directory: {output_dir}")
+    print(f"[+] Output directory: {output_path}")
 
     results = []
-
 
     # We cap concurrency to a small, safe value.
     max_workers = min(4, len(scans))
@@ -202,7 +199,7 @@ def main():
         # We collect all Future objects in a list
         # so we can track completion later.
         futures = [
-            executor.submit(run_nmap, scan, args, timeout, output_path)
+            executor.submit(run_nmap, scan, args, timeout, output_path, scan_name)
             for scan in scans
         ]
 
