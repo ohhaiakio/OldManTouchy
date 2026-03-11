@@ -124,7 +124,7 @@ Then add the following:
 
 Finally use `sudo systemctl restart smbd` to restart the service and activate the shares.
 
-User can access the share via:
+### User can access the share via:
 
 #### From Linux:
 
@@ -141,12 +141,18 @@ It should connect without prompting for credentials
 #### From Mac:
 
 Finder → Go → Connect to Server
+
 Enter `smb://your-linux-ip/shared`
 
 #### Common Issues
 Permission denied? Make sure the directory is readable:
+
 `chmod 755 ~/shared`
+
 Share not showing up? Test the config:
+
 `testparm`
+
 Firewall blocking? Allow Samba:
+
 `sudo ufw allow 139,445/tcp`
