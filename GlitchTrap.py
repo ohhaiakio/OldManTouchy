@@ -240,7 +240,7 @@ def main():
         print(f"{r['name']}: {r['status']}")
 
     print("[+] All scans finished")
-    send_discord("# Scans complete! Full Scans can be found here: http://192.168.1.160")
+    send_discord("# Scans complete! Full Scans can be found here: http://10.62.128.2")
 
 
 if __name__ == "__main__":

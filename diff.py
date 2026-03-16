@@ -3,9 +3,10 @@ from pathlib import Path
 from nmap_tracker import NmapTracker
 import requests
 from datetime import datetime
+import sys
 
 # Deal with Discord webhook URL in a global way
-webhook = Path("webhook.link")
+webhook = Path(__file__).parent / "webhook.link"
 if not webhook.exists():
     print("[!] Webhook file does not exist")
     sys.exit(1)
@@ -51,7 +52,7 @@ def test():
     new = "/home/akio/git/OldManTouchy/results/quick/team01_latest.xml"
     old = "/home/akio/git/OldManTouchy/results/quick/team01_20260308_224138.xml"
 
-    webhook = Path("webhook.link")
+    webhook = Path(__file__).parent / "webhook.link"
     if not webhook.exists():
         print("[!] Webhook file does not exist")
         sys.exit(1)

@@ -156,3 +156,81 @@ Share not showing up? Test the config:
 Firewall blocking? Allow Samba:
 
 `sudo ufw allow 139,445/tcp`
+
+### Systemd Service & Timer Setup
+
+#### Service: `GT-Top1000.service`
+
+Create the file at `/etc/systemd/system/GT-Top1000.service`:
+
+```ini
+[Unit]
+Description=Run Top1000 GlitchTrap Script
+
+[Service]
+ExecStart=/usr/bin/python3 /home/user/GlitchTrap/GlitchTrap.py
+WorkingDirectory=/home/user/GlitchTrap
+User=user
+```
+
+> **Note:** The service has no `[Install]` section intentionally — it is not meant to be enabled directly. It is started exclusively by the timer.
+
+#### Timer: `GT-Top1000.timer`
+
+Create the file at `/etc/systemd/system/GT-Top1000.timer`:
+
+```ini
+[Unit]
+Description=Run Top1000 Every 10 minutes
+
+[Timer]
+OnBootSec=30s
+OnCalendar=*:0/10
+AccuracySec=1s
+Unit=GT-Top1000.service
+
+[Install]
+WantedBy=timers.target
+```
+
+- `OnBootSec=30s` — fires 30 seconds after boot for the first run
+- `OnCalendar=*:0/10` — fires every 10 minutes on the clock (e.g. :00, :10, :20...)
+- `AccuracySec=1s` — reduces trigger jitter to ~1 second
+
+---
+
+#### Installation
+
+After creating both unit files, run:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now GT-Top1000.timer
+```
+
+This reloads systemd's unit index, enables the timer to survive reboots, and starts it immediately.
+
+
+#### Verifying the Timer
+
+**Check timer status and next trigger time:**
+```bash
+systemctl status GT-Top1000.timer
+```
+
+Expected output should show `Active: active (waiting)` and a future `Trigger:` time.
+
+**List all active timers (with last/next run times):**
+```bash
+systemctl list-timers | grep GT
+```
+
+**Watch live service logs as the timer fires:**
+```bash
+journalctl -fu GT-Top1000.service
+```
+
+**View recent service run history:**
+```bash
+journalctl -u GT-Top1000.service --since "1 hour ago"
+```
