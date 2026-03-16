@@ -111,7 +111,7 @@ def run_nmap(scan, args, timeout, output_dir, scan_name):
             if any(line.startswith(p) for p in PROGRESS_PATTERNS):
                 print(f"    [{team_name}] {line}")
             elapsed = time.monotonic() - start_time
-            print(f"[DEBUG] elapsed={elapsed:.2f}s, timeout={timeout}")  # <-- add this
+            # print(f"[DEBUG] elapsed={elapsed:.2f}s, timeout={timeout}")  # <-- add this
             if time.monotonic() - start_time > int(timeout):
                 result.kill()
                 result.stdout.close()
