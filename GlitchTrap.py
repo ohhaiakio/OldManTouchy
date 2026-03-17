@@ -133,13 +133,14 @@ def run_nmap(scan, args, timeout, output_dir, scan_name):
             backup_file = output_dir / f"{team_name}_latest.xml"
             shutil.copy2(xml_file, backup_file)
             # Send scans for compare and for reporting to Discord
-            diff(xml_file, output_dir, team_name, scan_name)
+            has_findings = diff(xml_file, output_dir, team_name, scan_name)
 
         # Successful scan
         return {
             "name": team_name,
             "status": "success",
-            "output": str(output_file)
+            "output": str(output_file),
+            "has_findings": has_findings
         }
     except subprocess.TimeoutExpired as e:
         return {
@@ -240,7 +241,8 @@ def main():
         print(f"{r['name']}: {r['status']}")
 
     print("[+] All scans finished")
-    send_discord("# Scans complete! Full Scans can be found here: http://10.62.128.2")
+    if any(r.get("has_findings") for r in results):
+        send_discord("# Scans complete! Full Scans can be found here: http://10.62.128.2")
 
 
 if __name__ == "__main__":

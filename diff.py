@@ -73,8 +73,10 @@ def diff(report, path, team_name, scan_name):
     tracker = NmapTracker(master)
     result = tracker.process_scan(report)
 
-    message = build_message(result, team_name, scan_name)
-    send_discord(message)
+    if result.has_findings:
+        message = build_message(result, team_name, scan_name)
+        send_discord(message)
+    return result.has_findings
 
 if __name__ == "__main__":
     test()
