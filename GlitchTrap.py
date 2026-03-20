@@ -270,7 +270,7 @@ def _main():
 
     print("[+] All scans finished")
     if any(r.get("has_findings") for r in results):
-        send_discord("# Scans complete! Full Scans can be found here: http://10.62.128.2 \n ---")
+        send_discord("# Scans complete! Full Scans can be found here: http://10.62.128.2")
 
 
 if __name__ == "__main__":
